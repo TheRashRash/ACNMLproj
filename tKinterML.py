@@ -35,14 +35,14 @@ def select_model():
 # Create the model selection radio buttons
 model_var = tk.StringVar()
 
-model1_radio = tk.Radiobutton(window, text="Model 1", variable=model_var, value="Model1")
-model1_radio.pack()
+linearReg_radio = tk.Radiobutton(window, text="Linear Regression", variable=model_var, value="linearReg")
+linearReg_radio.pack()
 
-model2_radio = tk.Radiobutton(window, text="Model 2", variable=model_var, value="Model2")
-model2_radio.pack()
+logisticReg_radio = tk.Radiobutton(window, text="Logistic Regression", variable=model_var, value="logisticReg")
+logisticReg_radio.pack()
 
-model3_radio = tk.Radiobutton(window, text="Model 3", variable=model_var, value="Model3")
-model3_radio.pack()
+polynomReg_radio = tk.Radiobutton(window, text="Polynomial Regression", variable=model_var, value="polynomReg")
+polynomReg_radio.pack()
 
 # Create the select button
 select_button = tk.Button(window, text="Select Model", command=select_model)
