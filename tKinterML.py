@@ -1,51 +1,67 @@
 import tkinter as tk
+import numpy as np
+import importlib.util
 from tkinter import filedialog
-import matplotlib.pyplot as plt
 
-# Create the main window
-window = tk.Tk()
-window.title("Machine Learning Graph")
+class GridApp(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title('Grid Plotter')
+        self.geometry('800x800')
 
-def import_dataset():
-    # Open a file dialog to select the dataset file
-    file_path = filedialog.askopenfilename(filetypes=[("CSV Files", "*.csv")])
-    # Process the dataset file
+        self.canvas = tk.Canvas(self, bg='white')
+        self.canvas.pack(fill=tk.BOTH, expand=True)
 
-# Create the import button
-import_button = tk.Button(window, text="Import Dataset", command=import_dataset)
-import_button.pack()
+        self.grid_size = 20
+        self.points = []
+        self.bind('<Configure>', self.draw_grid)
 
-def plot_graph():
-    # Plot the graph
-    plt.scatter(x_data, y_data)
-    plt.xlabel("X-axis")
-    plt.ylabel("Y-axis")
-    plt.title("Data Points")
-    plt.show()
+        self.entry = tk.Entry(self)
+        self.entry.pack(side=tk.BOTTOM, fill=tk.X)
 
-# Create the plot button
-plot_button = tk.Button(window, text="Plot Graph", command=plot_graph)
-plot_button.pack()
+        self.button = tk.Button(self, text='Load Model', command=self.load_model)
+        self.button.pack(side=tk.BOTTOM)
 
+        self.canvas.bind('<Button-1>', self.add_point)
 
-def select_model():
-    selected_model = model_var.get()
-    # Perform actions based on the selected model
+def draw_grid(self, event=None):
+    self.canvas.delete('grid_line')  # to remove old grid when resizing
+    w = self.canvas.winfo_width()  # get current width
+    h = self.canvas.winfo_height()  # get current height
+    grid_width = max(int(w / self.grid_size), 1)
 
-# Create the model selection radio buttons
-model_var = tk.StringVar()
+    # create all horizontal lines
+    for i in range(0, w, grid_width):
+        self.canvas.create_line([(i, 0), (i, h)], tag='grid_line', fill='gray', width=2)
 
-linearReg_radio = tk.Radiobutton(window, text="Linear Regression", variable=model_var, value="linearReg")
-linearReg_radio.pack()
+    # create all vertical lines
+    for i in range(0, h, grid_width):
+        self.canvas.create_line([(0, i), (w, i)], tag='grid_line', fill='gray', width=2)
 
-logisticReg_radio = tk.Radiobutton(window, text="Logistic Regression", variable=model_var, value="logisticReg")
-logisticReg_radio.pack()
+    def add_point(self, event):
+        h = self.canvas.winfo_height()
+        self.canvas.create_oval(event.x-5, h-event.y-5, event.x+5, h-event.y+5, fill='black')
+        self.points.append((event.x, h - event.y))
 
-polynomReg_radio = tk.Radiobutton(window, text="Polynomial Regression", variable=model_var, value="polynomReg")
-polynomReg_radio.pack()
+    def load_model(self):
+        filepath = filedialog.askopenfilename(
+            filetypes=[("Python files", "*.py")]
+        )
+        spec = importlib.util.spec_from_file_location("model_module", filepath)
+        model_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(model_module)
 
-# Create the select button
-select_button = tk.Button(window, text="Select Model", command=select_model)
-select_button.pack()
+        if hasattr(model_module, 'fit'):
+            self.draw_best_fit_line(model_module.fit(np.array(self.points)))
+        else:
+            print("The selected Python file does not have a 'fit' function.")
 
-window.mainloop()
+    def draw_best_fit_line(self, params):
+        w = self.canvas.winfo_width()
+        h = self.canvas.winfo_height()
+        slope, intercept = params
+        self.canvas.create_line(0, h - intercept, w, h - (slope * w + intercept), fill='red', width=2)
+
+if __name__ == '__main__':
+    app = GridApp()
+    app.mainloop()
